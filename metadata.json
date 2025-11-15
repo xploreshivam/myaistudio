@@ -1,5 +1,5 @@
-
 {
   "name": "AI YouTube Content Factory",
-  "description": "An automated content creation pipeline that generates YouTube video titles, scripts, voiceovers, and images from a single topic using Gemini API."
+  "description": "An automated content creation pipeline that generates YouTube video titles, scripts, voiceovers, and images from a single topic using Gemini API.",
+  "requestFramePermissions": []
 }
