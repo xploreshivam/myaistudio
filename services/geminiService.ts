@@ -1,7 +1,21 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { decode, pcmToWav } from '../utils/audioUtils';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// --- LAZY INITIALIZATION FOR AI CLIENT ---
+// We initialize the AI client only when it's first needed.
+// This prevents the app from crashing on startup if the API_KEY environment variable isn't immediately available during deployment.
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = (): GoogleGenAI => {
+    if (!ai) {
+        if (!process.env.API_KEY) {
+            // This error will be caught by the user-facing check in App.tsx, but it's a good safeguard.
+            throw new Error("Gemini API Key is not configured. Please set the API_KEY environment variable.");
+        }
+        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    }
+    return ai;
+};
 
 const textModel = 'gemini-2.5-flash';
 const imageModel = 'imagen-4.0-generate-001';
@@ -14,7 +28,8 @@ const IMAGE_GENERATION_PER_PROMPT = 1;
 export const generateTitles = async (topic: string): Promise<string[]> => {
     const prompt = `Pregnancy topic "${topic}" par ${TITLE_COUNT} YouTube titles generate karo. Titles 100% unique, curiosity-based, emotional hook wale ho. Indian women ke perspective ke hisaab se likho. Words ‘Ladka’, ‘Safed Pani’, ‘Pregnancy Test Kit’, ‘Ultrasound’, ‘Ovulation’, ‘Implantation’, ‘Symptoms’ ka smart use karo. Title aise ho ki user turant click kare. koi heading mat dena, बस titles numbered list me do.`;
     
-    const response = await ai.models.generateContent({
+    const client = getAiClient();
+    const response = await client.models.generateContent({
         model: textModel,
         contents: prompt,
         config: {
@@ -32,7 +47,8 @@ export const generateTitles = async (topic: string): Promise<string[]> => {
 export const generateScript = async (title: string): Promise<string> => {
     const prompt = `"${title}" ,  es par ek YouTube video script likho without heading with proper hooks give only answer LIKE EXPERT, please deep and unique insight, my video length is 1 to 1.2 minutes only, please make shorts as soon as possible and give clear answer, in completely dev Nagri , do not use full stop beyond use comma, like indian youtuber angry prash in hindi , speaker is female , make sure in devnagri, start with dekhiye   and  question , only give accurate answer only , make sure use comma,`;
 
-    const response = await ai.models.generateContent({
+    const client = getAiClient();
+    const response = await client.models.generateContent({
         model: textModel,
         contents: prompt,
         config: {
@@ -44,7 +60,8 @@ export const generateScript = async (title: string): Promise<string> => {
 };
 
 export const generateAudio = async (script: string): Promise<Blob> => {
-    const response = await ai.models.generateContent({
+    const client = getAiClient();
+    const response = await client.models.generateContent({
         model: ttsModel,
         contents: [{ parts: [{ text: script }] }],
         config: {
@@ -71,7 +88,8 @@ export const generateAudio = async (script: string): Promise<Blob> => {
 export const generateThumbnailPrompt = async (title: string): Promise<string> => {
     const prompt = `Generate a single, compelling, and photorealistic YouTube thumbnail image prompt for a video titled: "${title}". The prompt should describe a visually striking image with a clear focal point, vibrant colors, and an emotionally engaging scene relevant to an Indian audience. Do not include any text in the image description. The output should be only the prompt text, without any labels or quotes.`;
     
-    const response = await ai.models.generateContent({
+    const client = getAiClient();
+    const response = await client.models.generateContent({
         model: textModel,
         contents: prompt,
         config: {
@@ -83,7 +101,8 @@ export const generateThumbnailPrompt = async (title: string): Promise<string> =>
 };
 
 export const generateImages = async (prompt: string): Promise<string[]> => {
-    const response = await ai.models.generateImages({
+    const client = getAiClient();
+    const response = await client.models.generateImages({
         model: imageModel,
         prompt: prompt,
         config: {
