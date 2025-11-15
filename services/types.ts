@@ -1,4 +1,3 @@
-
 export enum LogStatus {
   INFO = 'info',
   PENDING = 'pending',
@@ -26,4 +25,5 @@ export interface GeneratedAsset {
   name: string;
   url: string;
   blob: Blob;
+  driveUrl?: string;
 }
