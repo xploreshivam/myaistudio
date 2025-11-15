@@ -11,7 +11,6 @@ import { GoogleAuth } from './components/GoogleAuth';
 // STEP 1: YAHAN APNI GOOGLE CLIENT ID DAALEIN
 // Google Cloud Console se copy karke 'YOUR_GOOGLE_CLIENT_ID_HERE' ki jagah paste karein.
 // =================================================================================
-// FIX: Explicitly type as string to prevent TypeScript error on comparison check.
 const GOOGLE_CLIENT_ID: string = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com';
 
 // =================================================================================
@@ -19,7 +18,6 @@ const GOOGLE_CLIENT_ID: string = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.
 // Google Drive folder ke URL se ID copy karke paste karein.
 // Agar aap poora URL bhi daal denge, toh yeh code apne aap ID nikal lega.
 // =================================================================================
-// FIX: Explicitly type as string to prevent TypeScript error on comparison check.
 const DRIVE_FOLDER_ID_INPUT: string = '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
 
 // --- Helper function to extract Folder ID from URL ---
@@ -45,7 +43,35 @@ declare global {
   }
 }
 
+const ConfigErrorDisplay: React.FC<{ title: string; message: string; instructions: string; }> = ({ title, message, instructions }) => (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-2xl bg-slate-800 border border-red-500/50 rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-400 mb-4">{title}</h1>
+          <p className="text-slate-300 mb-2">{message}</p>
+          <p className="text-slate-400 bg-slate-900 p-4 rounded-md font-mono text-sm">{instructions}</p>
+          <p className="text-slate-400 mt-4 text-sm">Please update your settings and deploy the application again.</p>
+        </div>
+    </div>
+);
+
+
 export default function App() {
+  // --- CRITICAL PRE-FLIGHT CHECKS ---
+  if (!process.env.API_KEY) {
+    return <ConfigErrorDisplay 
+      title="API Key Error"
+      message="The Gemini API Key is missing."
+      instructions="Please set the API_KEY environment variable in your deployment settings (e.g., Netlify > Site configuration > Build & deploy > Environment)."
+    />;
+  }
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID_INPUT === 'YOUR_DRIVE_FOLDER_ID_HERE') {
+    return <ConfigErrorDisplay 
+      title="Configuration Error"
+      message="The application is not configured correctly."
+      instructions="Please set your Google Client ID and Drive Folder ID in the App.tsx file."
+    />;
+  }
+
   const [topic, setTopic] = useState<string>('');
   const [previousTopics, setPreviousTopics] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -55,7 +81,6 @@ export default function App() {
   
   const [googleApiReady, setGoogleApiReady] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
   
   const tokenClientRef = useRef<any>(null);
   const logCounter = useRef(0);
@@ -72,11 +97,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID_INPUT === 'YOUR_DRIVE_FOLDER_ID_HERE') {
-      setConfigError('Configuration Error: Please set your Google Client ID and Drive Folder ID in the App.tsx file.');
-      return;
-    }
-
     const initializeGapiClient = () => {
       window.gapi.client.init({
         clientId: GOOGLE_CLIENT_ID,
@@ -186,8 +206,6 @@ export default function App() {
 
     setIsLoading(true); setProgress(0); setLogs([]); setGeneratedAssets([]); logCounter.current = 0;
     
-    if (configError) { addLog(LogStatus.ERROR, configError); setIsLoading(false); return; }
-
     setPreviousTopics(prev => [...prev, topic.trim()]);
     const sanitizedTopic = topic.trim().replace(/\s+/g, '_');
 
@@ -257,19 +275,6 @@ export default function App() {
         setIsLoading(false);
     }
   };
-
-  if (configError) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="max-w-2xl bg-slate-800 border border-red-500/50 rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">Configuration Error</h1>
-          <p className="text-slate-300 mb-2">The application cannot start because it is not configured correctly.</p>
-          <p className="text-slate-400 bg-slate-900 p-4 rounded-md font-mono text-sm">{configError}</p>
-          <p className="text-slate-400 mt-4 text-sm">Please update the file and deploy your application again.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-900 font-sans p-4 sm:p-6 lg:p-8">
