@@ -7,10 +7,21 @@ import { decode } from './utils/audioUtils';
 import { addTextToImage } from './utils/imageUtils';
 import { GoogleAuth } from './components/GoogleAuth';
 
-// IMPORTANT: Replace with your Google Client ID
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
-// The ID of the Google Drive folder to upload files to.
-const DRIVE_FOLDER_ID = '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
+// =================================================================================
+// STEP 1: YAHAN APNI GOOGLE CLIENT ID DAALEIN
+// Google Cloud Console se copy karke 'YOUR_GOOGLE_CLIENT_ID_HERE' ki jagah paste karein.
+// For example: '1234567890-abcdefg.apps.googleusercontent.com'
+// =================================================================================
+const GOOGLE_CLIENT_ID = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com';
+
+// =================================================================================
+// STEP 2: YAHAN APNI GOOGLE DRIVE FOLDER ID DAALEIN
+// Google Drive folder ke URL se copy karke 'YOUR_DRIVE_FOLDER_ID_HERE' ki jagah paste karein.
+// For example: '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd'
+// =================================================================================
+const DRIVE_FOLDER_ID = 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
+
+
 const GOOGLE_API_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
 
@@ -173,8 +184,8 @@ export default function App() {
     setGeneratedAssets([]);
     logCounter.current = 0;
     
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-      addLog(LogStatus.ERROR, 'Please replace "216359888388-ce6g8364ka67fjjnma7eip8hpjqrb5al.apps.googleusercontent.com" in App.tsx with your actual Google Client ID.');
+    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID === 'YOUR_DRIVE_FOLDER_ID_HERE') {
+      addLog(LogStatus.ERROR, 'Please replace placeholders in App.tsx with your actual Google Client ID and Drive Folder ID.');
       setIsLoading(false);
       return;
     }
