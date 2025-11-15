@@ -1,14 +1,8 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 
-// IMPORTANT: This assumes the API_KEY is set in the environment.
-// In a real-world scenario, you would handle this more securely.
-if (!process.env.API_KEY) {
-    // In a deployed environment, this check might not be sufficient.
-    // For this example, we'll proceed, but real apps need robust key management.
-    console.warn("API_KEY environment variable not set. Using a placeholder.");
-}
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "YOUR_API_KEY_HERE" });
+// The user has provided an API key to be used for this session.
+// In a real application, this should be handled securely, e.g., via environment variables.
+const ai = new GoogleGenAI({ apiKey: "AIzaSyAxlKE8uUFiVbQgapEuImwtj_XFC0gKSBA" });
 
 const textModel = ai.models['gemini-2.5-flash'];
 const imageModel = 'imagen-4.0-generate-001';
