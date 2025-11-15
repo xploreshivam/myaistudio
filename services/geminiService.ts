@@ -1,5 +1,5 @@
 
-const OPENAI_API_KEY = "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";
+const OPENAI_API_KEY = "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";
 const API_URL = "https://api.openai.com/v1";
 
 const textModel = 'gpt-4o';
