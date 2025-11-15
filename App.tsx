@@ -12,14 +12,14 @@ import { GoogleAuth } from './components/GoogleAuth';
 // Google Cloud Console se copy karke 'YOUR_GOOGLE_CLIENT_ID_HERE' ki jagah paste karein.
 // For example: '1234567890-abcdefg.apps.googleusercontent.com'
 // =================================================================================
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+const GOOGLE_CLIENT_ID = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com';
 
 // =================================================================================
 // STEP 2: YAHAN APNI GOOGLE DRIVE FOLDER ID DAALEIN
 // Google Drive folder ke URL se copy karke 'YOUR_DRIVE_FOLDER_ID_HERE' ki jagah paste karein.
 // For example: '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd'
 // =================================================================================
-const DRIVE_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';
+const DRIVE_FOLDER_ID = 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
 
 
 const GOOGLE_API_SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -67,7 +67,7 @@ export default function App() {
   // --- Google API Initialization ---
   useEffect(() => {
     // Step 1: Check for configuration errors
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID === 'YOUR_DRIVE_FOLDER_ID_HERE') {
+    if (GOOGLE_CLIENT_ID === '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com' || DRIVE_FOLDER_ID === 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd') {
       setConfigError('Configuration Error: Please set your Google Client ID and Drive Folder ID in the App.tsx file.');
       return;
     }
