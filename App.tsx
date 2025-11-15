@@ -10,20 +10,33 @@ import { GoogleAuth } from './components/GoogleAuth';
 // =================================================================================
 // STEP 1: YAHAN APNI GOOGLE CLIENT ID DAALEIN
 // Google Cloud Console se copy karke 'YOUR_GOOGLE_CLIENT_ID_HERE' ki jagah paste karein.
-// For example: '1234567890-abcdefg.apps.googleusercontent.com'
 // =================================================================================
-const GOOGLE_CLIENT_ID = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com';
+// FIX: Explicitly type as string to prevent TypeScript error on comparison check.
+const GOOGLE_CLIENT_ID: string = '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com';
 
 // =================================================================================
-// STEP 2: YAHAN APNI GOOGLE DRIVE FOLDER ID DAALEIN
-// Google Drive folder ke URL se copy karke 'YOUR_DRIVE_FOLDER_ID_HERE' ki jagah paste karein.
-// For example: '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd'
+// STEP 2: YAHAN APNI GOOGLE DRIVE FOLDER ID (YA POORA URL) DAALEIN
+// Google Drive folder ke URL se ID copy karke paste karein.
+// Agar aap poora URL bhi daal denge, toh yeh code apne aap ID nikal lega.
 // =================================================================================
-const DRIVE_FOLDER_ID = 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
+// FIX: Explicitly type as string to prevent TypeScript error on comparison check.
+const DRIVE_FOLDER_ID_INPUT: string = '1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd';
 
+// --- Helper function to extract Folder ID from URL ---
+const getDriveFolderId = (input: string): string => {
+    try {
+        if (input.includes('folders/')) {
+            const parts = input.split('folders/');
+            return parts[parts.length - 1].split('/')[0].split('?')[0];
+        }
+    } catch (error) {
+        console.error("Could not parse Drive Folder URL, using input as is.", error);
+    }
+    return input; // Assume it's an ID if parsing fails or isn't a URL
+};
 
+const DRIVE_FOLDER_ID = getDriveFolderId(DRIVE_FOLDER_ID_INPUT);
 const GOOGLE_API_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-
 
 declare global {
   interface Window {
@@ -40,7 +53,6 @@ export default function App() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [generatedAssets, setGeneratedAssets] = useState<GeneratedAsset[]>([]);
   
-  // Google Auth State
   const [googleApiReady, setGoogleApiReady] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
@@ -54,20 +66,13 @@ export default function App() {
   
   const addAsset = useCallback((type: AssetType, name: string, blob: Blob, driveUrl?: string) => {
     const asset: GeneratedAsset = {
-        id: `${name}-${Date.now()}`,
-        type,
-        name,
-        blob,
-        url: URL.createObjectURL(blob),
-        driveUrl,
+        id: `${name}-${Date.now()}`, type, name, blob, url: URL.createObjectURL(blob), driveUrl,
     };
     setGeneratedAssets(prev => [asset, ...prev]);
   }, []);
 
-  // --- Google API Initialization ---
   useEffect(() => {
-    // Step 1: Check for configuration errors
-    if (GOOGLE_CLIENT_ID === '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com' || DRIVE_FOLDER_ID === 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd') {
+    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID_INPUT === 'YOUR_DRIVE_FOLDER_ID_HERE') {
       setConfigError('Configuration Error: Please set your Google Client ID and Drive Folder ID in the App.tsx file.');
       return;
     }
@@ -99,22 +104,19 @@ export default function App() {
         });
     };
 
-    // Step 2: Wait for the Google scripts (loaded from index.html) to be ready
     const interval = setInterval(() => {
       if (window.gapi && window.google) {
         clearInterval(interval);
         window.gapi.load('client', () => {
-            // Step 3: Once scripts are loaded, initialize the clients
             initializeGapiClient();
             initializeGisClient();
             setGoogleApiReady(true);
         });
       }
-    }, 200); // Check every 200ms
+    }, 200);
 
-    return () => clearInterval(interval); // Cleanup
+    return () => clearInterval(interval);
   }, [addLog]);
-
 
   const handleAuthClick = () => {
     if (tokenClientRef.current) {
@@ -152,37 +154,22 @@ export default function App() {
     const delimiter = `\r\n--${boundary}\r\n`;
     const close_delim = `\r\n--${boundary}--`;
 
-    const metadata = {
-        name: fileName,
-        mimeType: blob.type,
-        parents: [DRIVE_FOLDER_ID]
-    };
+    const metadata = { name: fileName, mimeType: blob.type, parents: [DRIVE_FOLDER_ID] };
 
     const multipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(metadata) +
-        delimiter +
-        'Content-Type: ' + blob.type + '\r\n' +
-        'Content-Transfer-Encoding: base64\r\n\r\n' +
-        base64Data +
+        delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
+        delimiter + 'Content-Type: ' + blob.type + '\r\n' + 'Content-Transfer-Encoding: base64\r\n\r\n' + base64Data +
         close_delim;
     
     try {
         const response = await window.gapi.client.request({
-            path: 'https://www.googleapis.com/upload/drive/v3/files',
-            method: 'POST',
-            params: { uploadType: 'multipart' },
-            headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
+            path: 'https://www.googleapis.com/upload/drive/v3/files', method: 'POST',
+            params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
             body: multipartRequestBody,
         });
         
         const fileId = response.result.id;
-        const fileMetaResponse = await window.gapi.client.drive.files.get({
-          fileId: fileId,
-          fields: 'webViewLink'
-        });
-
+        const fileMetaResponse = await window.gapi.client.drive.files.get({ fileId: fileId, fields: 'webViewLink' });
         addLog(LogStatus.SUCCESS, `${fileName} uploaded successfully.`);
         return fileMetaResponse.result.webViewLink;
 
@@ -194,31 +181,19 @@ export default function App() {
     }
   };
 
-
   const handleStartWorkflow = async () => {
     if (!topic.trim() || isLoading || !isSignedIn) return;
 
-    setIsLoading(true);
-    setProgress(0);
-    setLogs([]);
-    setGeneratedAssets([]);
-    logCounter.current = 0;
+    setIsLoading(true); setProgress(0); setLogs([]); setGeneratedAssets([]); logCounter.current = 0;
     
-    if (configError) {
-      addLog(LogStatus.ERROR, configError);
-      setIsLoading(false);
-      return;
-    }
+    if (configError) { addLog(LogStatus.ERROR, configError); setIsLoading(false); return; }
 
     setPreviousTopics(prev => [...prev, topic.trim()]);
-    
-    let totalSteps = 0;
     const sanitizedTopic = topic.trim().replace(/\s+/g, '_');
 
     try {
         addLog(LogStatus.INFO, `Starting content generation for topic: "${topic}"`);
 
-        // Step 1: Generate Titles
         addLog(LogStatus.PENDING, 'Generating unique YouTube titles...');
         const titles = await geminiService.generateTitles(topic);
         if (titles.length === 0) throw new Error("Failed to generate titles.");
@@ -227,8 +202,7 @@ export default function App() {
         const titlesDriveUrl = await uploadToDrive(titlesBlob, `${sanitizedTopic}_titles.txt`);
         addAsset(AssetType.TITLE_LIST, `${sanitizedTopic}_titles.txt`, titlesBlob, titlesDriveUrl);
         
-        // Calculate total steps for progress bar
-        totalSteps = 1 + (titles.length * 4);
+        const totalSteps = 1 + (titles.length * 4);
         let completedSteps = 1;
         setProgress(completedSteps / totalSteps * 100);
 
@@ -237,48 +211,39 @@ export default function App() {
             const titleNumber = i + 1;
             const assetNamePrefix = `${sanitizedTopic}_${titleNumber}_${currentTitle.substring(0,20).replace(/\s+/g, '_')}`;
 
-            // Step 2: Generate Script
             addLog(LogStatus.PENDING, `[${titleNumber}/${titles.length}] Generating script for: "${currentTitle}"`);
             const script = await geminiService.generateScript(currentTitle);
             addLog(LogStatus.SUCCESS, `[${titleNumber}/${titles.length}] Script generated.`);
             const scriptBlob = new Blob([script], { type: 'text/plain' });
             const scriptDriveUrl = await uploadToDrive(scriptBlob, `${assetNamePrefix}_script.txt`);
             addAsset(AssetType.SCRIPT, `${assetNamePrefix}_script.txt`, scriptBlob, scriptDriveUrl);
-            completedSteps++;
-            setProgress(completedSteps / totalSteps * 100);
+            completedSteps++; setProgress(completedSteps / totalSteps * 100);
             
-            // Step 3: Generate Audio
             addLog(LogStatus.PENDING, `[${titleNumber}/${titles.length}] Generating voiceover...`);
             const audioBlob = await geminiService.generateAudio(script);
             addLog(LogStatus.SUCCESS, `[${titleNumber}/${titles.length}] Voiceover generated.`);
             const audioDriveUrl = await uploadToDrive(audioBlob, `${assetNamePrefix}_audio.wav`);
             addAsset(AssetType.AUDIO, `${assetNamePrefix}_audio.wav`, audioBlob, audioDriveUrl);
-            completedSteps++;
-            setProgress(completedSteps / totalSteps * 100);
+            completedSteps++; setProgress(completedSteps / totalSteps * 100);
 
-            // Step 4: Generate Thumbnail Image
             addLog(LogStatus.PENDING, `[${titleNumber}/${titles.length}] Generating thumbnail prompt...`);
             const thumbnailPrompt = await geminiService.generateThumbnailPrompt(currentTitle);
             addLog(LogStatus.PENDING, `[${titleNumber}/${titles.length}] Generating image for: "${thumbnailPrompt.substring(0, 40)}..."`);
             const imagesBase64 = await geminiService.generateImages(thumbnailPrompt);
             const imageBase64 = imagesBase64[0];
             if (!imageBase64) throw new Error("Failed to generate image.");
-            
             const imageBlob = new Blob([decode(imageBase64)], { type: 'image/jpeg' });
             const imageDriveUrl = await uploadToDrive(imageBlob, `${assetNamePrefix}_image.jpg`);
             addAsset(AssetType.IMAGE, `${assetNamePrefix}_image.jpg`, imageBlob, imageDriveUrl);
             addLog(LogStatus.SUCCESS, `[${titleNumber}/${titles.length}] Base image generated.`);
-            completedSteps++;
-            setProgress(completedSteps / totalSteps * 100);
+            completedSteps++; setProgress(completedSteps / totalSteps * 100);
 
-            // Step 5: Create Thumbnail (Add Text to Image)
             addLog(LogStatus.PENDING, `[${titleNumber}/${titles.length}] Creating final thumbnail...`);
             const thumbnailBlob = await addTextToImage(imageBlob, currentTitle);
             const thumbnailDriveUrl = await uploadToDrive(thumbnailBlob, `${assetNamePrefix}_thumbnail.jpg`);
             addAsset(AssetType.THUMBNAIL, `${assetNamePrefix}_thumbnail.jpg`, thumbnailBlob, thumbnailDriveUrl);
             addLog(LogStatus.SUCCESS, `[${titleNumber}/${titles.length}] Thumbnail created successfully.`);
-            completedSteps++;
-            setProgress(completedSteps / totalSteps * 100);
+            completedSteps++; setProgress(completedSteps / totalSteps * 100);
         }
         
         addLog(LogStatus.SUCCESS, "Workflow completed successfully!");
