@@ -44,6 +44,7 @@ export default function App() {
   const [gapiReady, setGapiReady] = useState(false);
   const [gisReady, setGisReady] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
   
   const tokenClientRef = useRef<any>(null);
   const logCounter = useRef(0);
@@ -66,21 +67,30 @@ export default function App() {
 
   // --- Google Drive Integration ---
   useEffect(() => {
+    if (GOOGLE_CLIENT_ID === '264170930084-rpsdfjboohsco9qsv3n1780m3a6u2u5o.apps.googleusercontent.com' || DRIVE_FOLDER_ID === 'https://drive.google.com/drive/u/6/folders/1psxqy7OGWYQw-2V-EytAwlOvKdrBODXd') {
+      setConfigError('Configuration Error: Please set your Google Client ID and Drive Folder ID in the App.tsx file.');
+      return;
+    }
+    
     // Load GAPI for Drive API
     const gapiScript = document.createElement('script');
     gapiScript.src = 'https://apis.google.com/js/api.js';
+    gapiScript.async = true;
+    gapiScript.defer = true;
     gapiScript.onload = () => window.gapi.load('client', () => setGapiReady(true));
     document.body.appendChild(gapiScript);
 
     // Load GIS for OAuth2
     const gisScript = document.createElement('script');
     gisScript.src = 'https://accounts.google.com/gsi/client';
+    gisScript.async = true;
+    gisScript.defer = true;
     gisScript.onload = () => setGisReady(true);
     document.body.appendChild(gisScript);
   }, []);
 
   useEffect(() => {
-    if (gapiReady && gisReady) {
+    if (gapiReady && gisReady && !configError) {
       tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: GOOGLE_API_SCOPES,
@@ -93,7 +103,7 @@ export default function App() {
         },
       });
     }
-  }, [gapiReady, gisReady, addLog]);
+  }, [gapiReady, gisReady, addLog, configError]);
 
   const handleAuthClick = () => {
     if (tokenClientRef.current) {
@@ -184,8 +194,8 @@ export default function App() {
     setGeneratedAssets([]);
     logCounter.current = 0;
     
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE' || DRIVE_FOLDER_ID === 'YOUR_DRIVE_FOLDER_ID_HERE') {
-      addLog(LogStatus.ERROR, 'Please replace placeholders in App.tsx with your actual Google Client ID and Drive Folder ID.');
+    if (configError) {
+      addLog(LogStatus.ERROR, configError);
       setIsLoading(false);
       return;
     }
@@ -272,6 +282,19 @@ export default function App() {
         setIsLoading(false);
     }
   };
+
+  if (configError) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-2xl bg-slate-800 border border-red-500/50 rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-400 mb-4">Configuration Error</h1>
+          <p className="text-slate-300 mb-2">The application cannot start because it is not configured correctly.</p>
+          <p className="text-slate-400 bg-slate-900 p-4 rounded-md font-mono text-sm">{configError}</p>
+          <p className="text-slate-400 mt-4 text-sm">Please update the file and deploy your application again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 font-sans p-4 sm:p-6 lg:p-8">
