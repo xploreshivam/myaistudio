@@ -174,7 +174,7 @@ export default function App() {
     logCounter.current = 0;
     
     if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-      addLog(LogStatus.ERROR, 'Please replace "YOUR_GOOGLE_CLIENT_ID_HERE" in App.tsx with your actual Google Client ID.');
+      addLog(LogStatus.ERROR, 'Please replace "216359888388-ce6g8364ka67fjjnma7eip8hpjqrb5al.apps.googleusercontent.com" in App.tsx with your actual Google Client ID.');
       setIsLoading(false);
       return;
     }
