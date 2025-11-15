@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { Log, GeneratedAsset } from '../types';
 import { LogItem } from './LogItem';
@@ -21,7 +20,7 @@ export const WorkflowDisplay: React.FC<WorkflowDisplayProps> = ({ logs, assets, 
   return (
     <div className="bg-slate-800/50 rounded-lg border border-slate-700 flex flex-col h-full">
       <div className="p-4 border-b border-slate-700">
-        <h2 className="text-lg font-bold text-white mb-2">2. Generation Progress</h2>
+        <h2 className="text-lg font-bold text-white mb-2">3. Generation Progress</h2>
         <div className="w-full bg-slate-700 rounded-full h-2.5">
           <div
             className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out"
